@@ -27,6 +27,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/vehiculos', [VehiculoController::class, 'index'])->name('vehiculos.index');
     Route::get('/licencias', [LicenciaController::class, 'index'])->name('licencias.index');
     Route::get('/traspasos', [TraspasoController::class, 'index'])->name('traspasos.index');
+    Route::post('/traspasos', [TraspasoController::class, 'store'])->name('traspasos.store');
 });
 
 Route::middleware('auth')->group(function () {
