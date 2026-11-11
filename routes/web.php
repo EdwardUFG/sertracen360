@@ -1,3 +1,4 @@
+
 <?php
 
 use App\Http\Controllers\EsquelaController;
@@ -23,16 +24,32 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/esquelas', [EsquelaController::class, 'index'])->name('esquelas.index');
-    Route::get('/vehiculos', [VehiculoController::class, 'index'])->name('vehiculos.index');
-    Route::get('/licencias', [LicenciaController::class, 'index'])->name('licencias.index');
-    Route::get('/traspasos', [TraspasoController::class, 'index'])->name('traspasos.index');
+    Route::get('/esquelas', [EsquelaController::class, 'index'])
+        ->name('esquelas.index');
+
+    Route::get('/vehiculos', [VehiculoController::class, 'index'])
+        ->name('vehiculos.index');
+
+    // Módulo de Licencias - Integrante 3
+    Route::get('/licencias', [LicenciaController::class, 'index'])
+        ->name('licencias.index');
+
+    Route::post('/licencias/refrenda', [LicenciaController::class, 'refrendar'])
+        ->name('licencias.refrenda');
+
+    Route::get('/traspasos', [TraspasoController::class, 'index'])
+        ->name('traspasos.index');
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/profile', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
+
+    Route::patch('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
+
+    Route::delete('/profile', [ProfileController::class, 'destroy'])
+        ->name('profile.destroy');
 });
 
 require __DIR__.'/auth.php';
