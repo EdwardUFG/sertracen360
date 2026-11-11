@@ -65,6 +65,7 @@ class PasswordResetTest extends TestCase
 
             $response
                 ->assertSessionHasNoErrors()
+                ->assertSessionHas('status', 'Tu contraseña se restableció correctamente. Ya puedes iniciar sesión.')
                 ->assertRedirect(route('login'));
 
             return true;
