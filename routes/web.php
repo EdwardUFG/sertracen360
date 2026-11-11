@@ -25,6 +25,7 @@ Route::get('/dashboard', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/esquelas', [EsquelaController::class, 'index'])->name('esquelas.index');
     Route::get('/vehiculos', [VehiculoController::class, 'index'])->name('vehiculos.index');
+    Route::post('/vehiculos/{vehiculo}/refrendar', [VehiculoController::class, 'refrendar'])->name('vehiculos.refrendar');
     Route::get('/licencias', [LicenciaController::class, 'index'])->name('licencias.index');
     Route::get('/traspasos', [TraspasoController::class, 'index'])->name('traspasos.index');
 });
