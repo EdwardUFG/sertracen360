@@ -37,6 +37,7 @@ return new class extends Migration
             $table->date('fecha_emision');
             $table->date('fecha_vencimiento');
             $table->string('estado')->default('Activo');
+            $table->boolean('tiene_multas_pendientes')->default(false);
             $table->timestamps();
         });
     }
