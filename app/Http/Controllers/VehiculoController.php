@@ -13,8 +13,8 @@ class VehiculoController extends Controller
     {
         $user = Auth::user();
 
-        // Extraer únicamente los vehículos del titular logueado usando documento_identidad / documento_propietario
-        $vehiculos = Vehiculo::with(['multas' => function ($query) {
+        // Extraer los vehículos del titular logueado incluyendo marca y multas pendientes
+        $vehiculos = Vehiculo::with(['marca', 'multas' => function ($query) {
                 $query->where('estado_pago', 'Pendiente');
             }])
             ->where('documento_propietario', $user->documento_identidad)
@@ -31,6 +31,11 @@ class VehiculoController extends Controller
 
     public function refrendar(Request $request, Vehiculo $vehiculo)
     {
+        // Regla estricta de seguridad: Validar que el vehículo pertenezca al usuario autenticado
+        if ($vehiculo->documento_propietario !== Auth::user()->documento_identidad) {
+            abort(403, 'No tienes autorización para refrendar este vehículo.');
+        }
+
         // Regla institucional estricta: Bloquear si posee multas con estado_pago Pendiente
         $tieneMultasPendientes = $vehiculo->multas()->where('estado_pago', 'Pendiente')->exists();
 
@@ -40,7 +45,7 @@ class VehiculoController extends Controller
             ]);
         }
 
-        // Procesar la refrenda si está solvente (actualizando estado o registrando el trámite)
+        // Procesar la refrenda si está solvente
         $vehiculo->update([
             'estado' => 'Refrendado',
         ]);

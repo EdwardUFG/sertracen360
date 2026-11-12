@@ -20,7 +20,17 @@ class Vehiculo extends Model
         'id_marca',
         'modelo',
         'anio',
+        'color',
+        'clase',
         'tipo_vehiculo',
+        'capacidad',
+        'dominio',
+        'en_calidad',
+        'numero_chasis',
+        'numero_motor',
+        'vin',
+        'fecha_emision',
+        'fecha_vencimiento',
         'estado',
     ];
 
@@ -32,5 +42,10 @@ class Vehiculo extends Model
     public function propietario()
     {
         return $this->belongsTo(User::class, 'documento_propietario', 'documento_identidad');
+    }
+
+    public function marca()
+    {
+        return $this->belongsTo(Marca::class, 'id_marca', 'id_marca');
     }
 }
