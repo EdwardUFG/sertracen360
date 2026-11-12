@@ -12,9 +12,16 @@ class TraspasoController extends Controller
 {
     public function index()
     {
-        // Buscar por 'documento_propietario' (asumiendo que el usuario logueado tiene un 'documento_identidad')
-        $vehiculos = Vehiculo::where('documento_propietario', auth()->user()->documento_identidad)->get();
-        
+        $vehiculos = Vehiculo::with(['multas' => function ($query) {
+                $query->whereRaw('LOWER(estado_pago) = ?', ['pendiente']);
+            }])
+            ->where('documento_propietario', auth()->user()->documento_identidad)
+            ->get()
+            ->map(function ($vehiculo) {
+                $vehiculo->tiene_multas_pendientes = $vehiculo->multas->isNotEmpty();
+                return $vehiculo;
+            });
+
         return Inertia::render('Traspasos/Index', [
             'vehiculos' => $vehiculos
         ]);
@@ -22,19 +29,40 @@ class TraspasoController extends Controller
 
     public function store(Request $request)
     {
-        // 1. Validar usando la placa en lugar del ID
         $request->validate([
             'placa' => 'required|exists:vehiculos,placa',
-            'nuevo_propietario' => ['required', 'regex:/^([0-9]{9}|[0-9]{14})$/'],
+            'nuevo_propietario' => [
+                'required',
+                'regex:/^([0-9]{9}|[0-9]{14})$/',
+                'exists:users,documento_identidad',
+            ],
         ], [
-            'nuevo_propietario.regex' => 'El documento debe ser un DUI (9 dígitos) o NIT (14 dígitos).'
+            'nuevo_propietario.regex' => 'El documento debe ser un DUI (9 dígitos) o NIT (14 dígitos).',
+            'nuevo_propietario.exists' => 'El documento del nuevo propietario no se encuentra registrado en el sistema.',
         ]);
 
-        $vehiculo = Vehiculo::findOrFail($request->placa);
+        $usuarioActual = auth()->user()->documento_identidad;
 
-        // 2. REGLA: Verificar multas ('estado_pago' == 'Pendiente') y estado del vehículo
-        $tieneMultas = $vehiculo->multas()->where('estado_pago', 'Pendiente')->exists();
-        $estaBloqueado = $vehiculo->estado !== 'Activo'; 
+        $vehiculo = Vehiculo::where('placa', $request->placa)
+            ->where('documento_propietario', $usuarioActual)
+            ->first();
+
+        if (!$vehiculo) {
+            return back()->withErrors([
+                'error_tramite' => 'Acceso denegado: No eres el propietario registrado de este vehículo.'
+            ]);
+        }
+
+        if ($request->nuevo_propietario === $usuarioActual) {
+            return back()->withErrors([
+                'error_tramite' => 'No puedes realizar un traspaso hacia tu mismo documento de identidad.'
+            ]);
+        }
+
+        $tieneMultas = $vehiculo->multas()
+            ->whereRaw('LOWER(estado_pago) = ?', ['pendiente'])
+            ->exists();
+        $estaBloqueado = strtolower($vehiculo->estado) !== 'activo';
 
         if ($tieneMultas || $estaBloqueado) {
             return back()->withErrors([
@@ -42,23 +70,18 @@ class TraspasoController extends Controller
             ]);
         }
 
-        // 3. REGLA: Transacción de Traspaso
-        DB::transaction(function () use ($vehiculo, $request) {
-            
-            // Registrar el trámite con las columnas de tu migración
+        DB::transaction(function () use ($vehiculo, $request, $usuarioActual) {
             Tramite::create([
-                'documento_solicitante' => auth()->user()->documento_identidad, // Quien pide el traspaso
+                'documento_solicitante' => $usuarioActual,
                 'placa_vehiculo' => $vehiculo->placa,
                 'tipo_tramite' => 'Traspaso de Dominio',
                 'estado_tramite' => 'Finalizado',
                 'fecha_solicitud' => now(),
             ]);
 
-            // Cambiar el dueño del vehículo
             $vehiculo->update([
                 'documento_propietario' => $request->nuevo_propietario
             ]);
-            
         });
 
         return redirect()->route('dashboard')->with('success', 'Traspaso aprobado exitosamente.');
