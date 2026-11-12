@@ -19,34 +19,27 @@ export default function Login({ status }) {
         <div className="min-h-screen flex items-center justify-center bg-[#4a85f6]">
             <Head title="Iniciar Sesión | Sertracen" />
 
-            {/* Contenedor tipo Tarjeta */}
             <div className="w-full max-w-md bg-[#f4f7fb] rounded-[2rem] shadow-2xl p-8 sm:p-10 mx-4 flex flex-col items-center">
-                
-                {/* Cuadro Azul Superior con Logos */}
                 <div className="bg-[#3366d6] rounded-2xl w-full py-4 flex items-center justify-center shadow-inner mb-6">
-                    <img 
-                        src="/images/sertracen_vmt.png" 
-                        alt="Logos VMT y Sertracen" 
-                        /* El filtro brightness-0 invert convierte la imagen oscura en blanca automáticamente */
-                        className="h-8 object-contain filter brightness-0 invert" 
+                    <img
+                        src="/images/sertracen_vmt.png"
+                        alt="Logos VMT y Sertracen"
+                        className="h-8 object-contain filter brightness-0 invert"
                     />
                 </div>
 
-                {/* Títulos */}
                 <h1 className="text-3xl font-bold text-[#3366d6] mb-1">Sertracen</h1>
                 <p className="text-gray-500 font-medium mb-8 text-sm sm:text-base">Sistema de Exámenes de Manejo</p>
 
                 {status && <div className="mb-4 font-medium text-sm text-green-600">{status}</div>}
 
                 <form onSubmit={submit} className="w-full">
-                    {/* Campo Documento de Identidad (Reemplaza al Correo) */}
                     <div className="mb-6">
                         <div className="flex justify-between items-center mb-2 pl-2 pr-1">
                             <label className="text-gray-800 font-bold text-sm" htmlFor="documento_identidad">
                                 Documento de Identidad
                             </label>
                             
-                            {/* Ícono de Ayuda (Tooltip) UX */}
                             <div className="group relative cursor-pointer flex items-center justify-center w-6 h-6 rounded-full hover:bg-blue-100 transition-colors">
                                 <svg className="w-4 h-4 text-gray-500 group-hover:text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
@@ -70,7 +63,6 @@ export default function Login({ status }) {
                         )}
                     </div>
 
-                    {/* Campo Contraseña */}
                     <div className="mb-8 relative">
                         <label className="block text-gray-800 font-bold text-sm mb-2 pl-2" htmlFor="password">
                             Contraseña
@@ -84,8 +76,6 @@ export default function Login({ status }) {
                             placeholder="••••••••"
                             required
                         />
-                        
-                        {/* Botón de visibilidad de contraseña */}
                         <button 
                             type="button" 
                             onClick={() => setShowPassword(!showPassword)}
@@ -104,7 +94,6 @@ export default function Login({ status }) {
                         )}
                     </div>
 
-                    {/* Botón de Inicio de Sesión */}
                     <button
                         type="submit"
                         disabled={processing}
@@ -114,7 +103,6 @@ export default function Login({ status }) {
                     </button>
                 </form>
 
-                {/* Enlaces de pie de página */}
                 <div className="mt-8 flex flex-col items-center space-y-3 text-sm font-medium text-gray-500">
                     <Link href={route('register')} className="hover:text-[#3366d6] transition-colors">
                         ¿Primera vez? Crear cuenta nueva

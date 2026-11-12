@@ -1,3 +1,4 @@
+
 <?php
 
 use App\Http\Controllers\EsquelaController;
@@ -25,15 +26,19 @@ Route::get('/dashboard', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/esquelas', [EsquelaController::class, 'index'])->name('esquelas.index');
     Route::get('/vehiculos', [VehiculoController::class, 'index'])->name('vehiculos.index');
-    Route::post('/vehiculos/{vehiculo}/refrendar', [VehiculoController::class, 'refrendar'])->name('vehiculos.refrendar');
     Route::get('/licencias', [LicenciaController::class, 'index'])->name('licencias.index');
     Route::get('/traspasos', [TraspasoController::class, 'index'])->name('traspasos.index');
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/profile', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
+
+    Route::patch('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
+
+    Route::delete('/profile', [ProfileController::class, 'destroy'])
+        ->name('profile.destroy');
 });
 
 require __DIR__.'/auth.php';
