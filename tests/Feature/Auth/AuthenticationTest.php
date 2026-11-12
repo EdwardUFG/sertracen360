@@ -3,7 +3,10 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use Database\Seeders\UserSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -30,6 +33,19 @@ class AuthenticationTest extends TestCase
         $response->assertRedirect(route('dashboard', absolute: false));
     }
 
+    public function test_seeded_users_can_authenticate_using_their_document_identity(): void
+    {
+        $this->seed(UserSeeder::class);
+
+        $response = $this->post('/login', [
+            'documento_identidad' => '0614-010190-101-1',
+            'password' => 'password123',
+        ]);
+
+        $this->assertAuthenticatedAs(User::query()->findOrFail('0614-010190-101-1'));
+        $response->assertRedirect(route('dashboard', absolute: false));
+    }
+
     public function test_users_can_not_authenticate_with_invalid_password(): void
     {
         $user = User::factory()->create();
@@ -40,6 +56,171 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertGuest();
+    }
+
+    public function test_failed_document_identity_login_returns_error_for_that_field(): void
+    {
+        $this->seed(UserSeeder::class);
+
+        $response = $this->post('/login', [
+            'documento_identidad' => '0614-010190-101-1',
+            'password' => 'wrong-password',
+        ]);
+
+        $this->assertGuest();
+        $response->assertSessionHasErrors([
+            'documento_identidad' => 'Las credenciales ingresadas no son correctas.',
+        ]);
+    }
+
+    public function test_login_validation_messages_are_in_spanish(): void
+    {
+        $response = $this->post('/login', [
+            'documento_identidad' => '',
+            'password' => '',
+        ]);
+
+        $response->assertSessionHasErrors([
+            'documento_identidad' => 'Ingresa tu documento de identidad o correo electrónico.',
+            'email' => 'Ingresa tu documento de identidad o correo electrónico.',
+            'password' => 'Ingresa tu contraseña.',
+        ]);
+    }
+
+    public function test_login_throttle_message_is_in_spanish(): void
+    {
+        $user = User::factory()->create();
+
+        for ($attempt = 0; $attempt < 6; $attempt++) {
+            $response = $this->post('/login', [
+                'email' => $user->email,
+                'password' => 'wrong-password',
+            ]);
+        }
+
+        $response->assertSessionHasErrors('email');
+
+        $message = app('session.store')
+            ->get('errors')
+            ->getBag('default')
+            ->first('email');
+
+        $this->assertStringStartsWith(
+            'Has realizado demasiados intentos de inicio de sesión. Inténtalo nuevamente en ',
+            $message
+        );
+        $this->assertStringEndsWith(' segundos.', $message);
+    }
+
+    public function test_failed_login_is_logged_without_credentials(): void
+    {
+        $logPath = storage_path('framework/testing/login-'.Str::uuid().'.log');
+        config(['logging.channels.login.path' => $logPath]);
+        Log::forgetChannel('login');
+
+        try {
+            $this->post('/login', [
+                'email' => 'missing@example.com',
+                'password' => 'secret-password',
+            ]);
+
+            $logContents = file_get_contents($logPath);
+
+            $this->assertIsString($logContents);
+            $this->assertStringContainsString('credenciales incorrectas', $logContents);
+            $this->assertStringContainsString('tipo_identificador', $logContents);
+            $this->assertStringNotContainsString('missing@example.com', $logContents);
+            $this->assertStringNotContainsString('secret-password', $logContents);
+        } finally {
+            Log::forgetChannel('login');
+
+            if (is_file($logPath)) {
+                unlink($logPath);
+            }
+        }
+    }
+
+    public function test_invalid_login_input_is_logged(): void
+    {
+        $logPath = storage_path('framework/testing/login-'.Str::uuid().'.log');
+        config(['logging.channels.login.path' => $logPath]);
+        Log::forgetChannel('login');
+
+        try {
+            $this->post('/login', [
+                'email' => '',
+                'password' => '',
+            ]);
+
+            $logContents = file_get_contents($logPath);
+
+            $this->assertIsString($logContents);
+            $this->assertStringContainsString('Solicitud de inicio de sesión inválida', $logContents);
+            $this->assertStringContainsString('campos', $logContents);
+        } finally {
+            Log::forgetChannel('login');
+
+            if (is_file($logPath)) {
+                unlink($logPath);
+            }
+        }
+    }
+
+    public function test_rate_limited_login_is_logged(): void
+    {
+        $logPath = storage_path('framework/testing/login-'.Str::uuid().'.log');
+        config(['logging.channels.login.path' => $logPath]);
+        Log::forgetChannel('login');
+        $user = User::factory()->create();
+
+        try {
+            for ($attempt = 0; $attempt < 6; $attempt++) {
+                $this->post('/login', [
+                    'email' => $user->email,
+                    'password' => 'wrong-password',
+                ]);
+            }
+
+            $logContents = file_get_contents($logPath);
+
+            $this->assertIsString($logContents);
+            $this->assertStringContainsString('bloqueado por exceso de intentos', $logContents);
+            $this->assertStringContainsString('segundos_restantes', $logContents);
+        } finally {
+            Log::forgetChannel('login');
+
+            if (is_file($logPath)) {
+                unlink($logPath);
+            }
+        }
+    }
+
+    public function test_successful_login_is_logged(): void
+    {
+        $logPath = storage_path('framework/testing/login-'.Str::uuid().'.log');
+        config(['logging.channels.login.path' => $logPath]);
+        Log::forgetChannel('login');
+        $user = User::factory()->create();
+
+        try {
+            $this->post('/login', [
+                'email' => $user->email,
+                'password' => 'password',
+            ]);
+
+            $logContents = file_get_contents($logPath);
+
+            $this->assertIsString($logContents);
+            $this->assertStringContainsString('Inicio de sesión exitoso', $logContents);
+            $this->assertStringNotContainsString($user->email, $logContents);
+            $this->assertStringNotContainsString('password', $logContents);
+        } finally {
+            Log::forgetChannel('login');
+
+            if (is_file($logPath)) {
+                unlink($logPath);
+            }
+        }
     }
 
     public function test_users_can_logout(): void
