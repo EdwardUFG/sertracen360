@@ -3,8 +3,10 @@
 namespace App\Http\Requests\Auth;
 
 use Illuminate\Auth\Events\Lockout;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -38,6 +40,15 @@ class LoginRequest extends FormRequest
         ];
     }
 
+    protected function failedValidation(Validator $validator): void
+    {
+        Log::channel('login')->warning('Solicitud de inicio de sesión inválida', [
+            'campos' => array_keys($validator->errors()->messages()),
+        ]);
+
+        parent::failedValidation($validator);
+    }
+
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
@@ -49,6 +60,9 @@ class LoginRequest extends FormRequest
             'password' => $this->string('password')->toString(),
         ], $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
+            Log::channel('login')->warning('Inicio de sesión rechazado: credenciales incorrectas', [
+                'tipo_identificador' => $credentialField,
+            ]);
 
             throw ValidationException::withMessages([
                 $credentialField => 'Las credenciales ingresadas no son correctas.',
@@ -56,6 +70,9 @@ class LoginRequest extends FormRequest
         }
 
         RateLimiter::clear($this->throttleKey());
+        Log::channel('login')->info('Inicio de sesión exitoso', [
+            'tipo_identificador' => $credentialField,
+        ]);
     }
 
     public function ensureIsNotRateLimited(): void
@@ -67,6 +84,10 @@ class LoginRequest extends FormRequest
         event(new Lockout($this));
 
         $seconds = RateLimiter::availableIn($this->throttleKey());
+        Log::channel('login')->warning('Inicio de sesión bloqueado por exceso de intentos', [
+            'tipo_identificador' => $this->credentialField(),
+            'segundos_restantes' => $seconds,
+        ]);
 
         throw ValidationException::withMessages([
             $this->credentialField() => "Has realizado demasiados intentos de inicio de sesión. Inténtalo nuevamente en {$seconds} segundos.",
