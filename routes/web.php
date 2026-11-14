@@ -52,3 +52,9 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/traspasos', [TraspasoController::class, 'index'])->name('traspasos.index');
+    Route::post('/traspasos', [TraspasoController::class, 'store'])->name('traspasos.store');
+});
