@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -10,22 +9,30 @@ class MultaSeeder extends Seeder
 {
     public function run(): void
     {
+        // Obtenemos el usuario y las placas existentes de forma dinámica
+        $usuario = DB::table('users')->first();
+        $documento = $usuario ? $usuario->documento_identidad : '01234567-8';
+
+        $vehiculos = DB::table('vehiculos')->pluck('placa')->toArray();
+        $placa1 = $vehiculos[0] ?? 'P123-456';
+        $placa2 = $vehiculos[1] ?? ($vehiculos[0] ?? 'PFAK3420');
+
         DB::table('multas')->insert([
             [
-                'placa_vehiculo' => 'P123-456',
-                'documento_infractor' => '01234567-8',
                 'descripcion' => 'Estacionarse en eje preferencial',
-                'monto' => 11.43,
+                'documento_infractor' => $documento,
                 'estado_pago' => 'Pendiente',
-                'fecha_infraccion' => Carbon::now()->subDays(5),
+                'fecha_infraccion' => '2026-11-07 15:35:36',
+                'monto' => 11.43,
+                'placa_vehiculo' => $placa1,
             ],
             [
-                'placa_vehiculo' => 'C111-222',
-                'documento_infractor' => null,
                 'descripcion' => 'Exceso de velocidad detectado por radar',
-                'monto' => 57.14,
+                'documento_infractor' => $documento,
                 'estado_pago' => 'Pendiente',
-                'fecha_infraccion' => Carbon::now()->subDays(2),
+                'fecha_infraccion' => '2026-11-10 15:35:36',
+                'monto' => 57.14,
+                'placa_vehiculo' => $placa2,
             ],
         ]);
     }

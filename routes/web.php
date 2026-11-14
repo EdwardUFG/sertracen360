@@ -23,21 +23,10 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/esquelas', [EsquelaController::class, 'index'])
-        ->name('esquelas.index');
-
-    Route::get('/vehiculos', [VehiculoController::class, 'index'])
-        ->name('vehiculos.index');
-
-    // Módulo de Licencias - Integrante 3
-    Route::get('/licencias', [LicenciaController::class, 'index'])
-        ->name('licencias.index');
-
-    Route::post('/licencias/refrenda', [LicenciaController::class, 'refrendar'])
-        ->name('licencias.refrenda');
-
-    Route::get('/traspasos', [TraspasoController::class, 'index'])
-        ->name('traspasos.index');
+    Route::get('/esquelas', [EsquelaController::class, 'index'])->name('esquelas.index');
+    Route::get('/vehiculos', [VehiculoController::class, 'index'])->name('vehiculos.index');
+    Route::get('/licencias', [LicenciaController::class, 'index'])->name('licencias.index');
+    Route::get('/traspasos', [TraspasoController::class, 'index'])->name('traspasos.index');
 });
 
 Route::middleware('auth')->group(function () {

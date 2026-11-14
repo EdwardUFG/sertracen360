@@ -94,7 +94,11 @@ export default function Dashboard() {
 
                <section aria-label="Servicios principales">
     <div className="grid gap-4 md:grid-cols-3">
-        <div className="flex min-h-32 flex-col justify-between rounded-2xl bg-blue-50 p-4 text-slate-800">
+        <Link
+            href={route('vehiculos.index')}
+            className="group flex min-h-32 flex-col justify-between rounded-2xl bg-blue-50 p-4 text-slate-800 transition hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+            aria-label="Ir al módulo de Vehículos"
+        >
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-700">
                 <Icon>
                     <path d="M5 16v-3l1.5-5h11L19 13v3" />
@@ -102,13 +106,20 @@ export default function Dashboard() {
                     <path d="M6.5 8h11" />
                 </Icon>
             </div>
-            <div>
-                <h2 className="text-lg font-bold">Vehículos</h2>
-                <p className="mt-1 text-sm text-slate-600">
-                    Consulta, registra y gestiona la información de tus vehículos.
-                </p>
+            <div className="flex items-end justify-between gap-3">
+                <div>
+                    <h2 className="text-lg font-bold">Vehículos</h2>
+                    <p className="mt-1 text-sm text-slate-600">
+                        Consulta, registra y gestiona la información de tus vehículos.
+                    </p>
+                </div>
+                <span className="mb-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700 transition group-hover:translate-x-1">
+                    <Icon className="h-4 w-4">
+                        <path d="M5 12h14M13 6l6 6-6 6" />
+                    </Icon>
+                </span>
             </div>
-        </div>
+        </Link>
 
         <Link
             href={route('licencias.index')}
